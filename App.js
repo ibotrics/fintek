@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, {useEffect} from 'react';
 import {
   ScrollView,
   StatusBar,
@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   useColorScheme,
   View,
-  Button
+  Button,
 } from 'react-native';
 import DeviceNumber from 'react-native-device-number';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import {
   Colors,
   DebugInstructions,
@@ -25,10 +25,9 @@ import OtpScreen from './screens/Otp';
 import IntroScreen from './screens/Intro';
 import HomeScreen from './screens/Home';
 import PermissionsScreen from './screens/Permissions';
-import UserDetailsScreen from './screens/UserDetails'
+import UserDetailsScreen from './screens/UserDetails';
 import EmailVerificationScreen from './screens/EmailVerification';
-import GlobalFont from 'react-native-global-font'
-
+import GlobalFont from 'react-native-global-font';
 
 const Stack = createNativeStackNavigator();
 
@@ -36,20 +35,22 @@ const MyStack = () => {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-
+        <Stack.Navigator screenOptions={{headerShown: false}}>
+          <Stack.Screen name="UserDetails" component={UserDetailsScreen} />
           <Stack.Screen name="Intro" component={IntroScreen} />
           <Stack.Screen
             name="Login"
             component={LoginScreen}
-          // options={{ title: 'Welcome' }}
-          // Header={null}
+            // options={{ title: 'Welcome' }}
+            // Header={null}
           />
+          <Stack.Screen
+            name="EmailVerification"
+            component={EmailVerificationScreen}
+          />
+          <Stack.Screen name="Otp" component={OtpScreen} />
           <Stack.Screen name="Permissions" component={PermissionsScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="UserDetails" component={UserDetailsScreen} />
-          <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} />
-          <Stack.Screen name="Otp" component={OtpScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
@@ -64,14 +65,11 @@ const App = () => {
   };
 
   useEffect(() => {
-    let fontName = 'FontAwesome5_Regular';
+    let fontName = 'BasierCircle-Regular';
     GlobalFont.applyGlobal(fontName);
   }, []);
-  
-  
-  return (
-    <MyStack />
-  );
+
+  return <MyStack />;
 };
 
 const styles = StyleSheet.create({

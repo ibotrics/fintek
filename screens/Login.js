@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -8,173 +8,224 @@ import {
   TouchableOpacity,
   Platform,
   Dimensions,
-  Alert
+  Alert,
+  BackHandler,
 } from 'react-native';
 import CheckBox from 'react-native-check-box';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
 import querystring from 'query-string-for-all';
 import DeviceNumber from 'react-native-device-number';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getUniqueId, getManufacturer } from 'react-native-device-info';
-const LoginScreen = ({ navigation }) => {
-  const [mobile, setMobile] = useState("");
-  const [tempAuthToken, setTempAuthToken] = useState(null)
-  const [isSelected, setIsSelected] = useState(true)
+import {getUniqueId, getManufacturer} from 'react-native-device-info';
+import {colors} from '../Styles/Colors';
+import {textStyles} from '../Styles/FontStyles';
+const LoginScreen = ({navigation}) => {
+  const [mobile, setMobile] = useState('');
+  const [tempAuthToken, setTempAuthToken] = useState(null);
+  const [isSelected, setIsSelected] = useState(true);
 
   useEffect(() => {
     getAuthToken();
     getPhone();
-  },[]);
+  }, []);
 
   const getPhone = () => {
-    if(Platform.OS==="android"){
-      DeviceNumber.get().then((res) => {
+    if (Platform.OS === 'android') {
+      DeviceNumber.get().then(res => {
         setMobile(res.mobileNumber.substring(3));
-      })
+      });
     }
-  }
+  };
 
   const getAuthToken = () => {
-    const url = "https://dev.l8r.in/auth/realms/respo-api-realm-local/protocol/openid-connect/token";
+    const url =
+      'https://dev.l8r.in/auth/realms/respo-api-realm-local/protocol/openid-connect/token';
     const data = {
-      'grant_type': 'password',
-      'scope': 'email profile',
-      'client_id': 'respo-microservices-local',
-      'client_secret': 'fe26670c-43c3-4275-97fc-bb709d716b0b',
-      'username': 'profile-api-dev',
-      'password': 'password'
-    }
-    axios.post(url, querystring.stringify(data))
-      .then(async (response) => {
+      grant_type: 'password',
+      scope: 'email profile',
+      client_id: 'respo-microservices-local',
+      client_secret: 'fe26670c-43c3-4275-97fc-bb709d716b0b',
+      username: 'profile-api-dev',
+      password: 'password',
+    };
+    axios
+      .post(url, querystring.stringify(data))
+      .then(async response => {
         // console.log('userresponse ' + response.data.access_token);
         setTempAuthToken(response.data.access_token);
-        await AsyncStorage.setItem("tempAuthToken", response.data.access_token)
+        await AsyncStorage.setItem('tempAuthToken', response.data.access_token);
       })
-      .catch((error) => {
+      .catch(error => {
         console.log('error ' + error);
       });
-  }
+  };
 
-  const reVerification = (customerId) =>{
-    if (isSelected && mobile && mobile !== "" && mobile.length === 10) {
-      const url = "https://sit.l8r.in/profile-service/api/v1/customers/update/verification";
+  const reVerification = customerId => {
+    if (isSelected && mobile && mobile !== '' && mobile.length === 10) {
+      const url =
+        'https://sit.l8r.in/profile-service/api/v1/customers/update/verification';
       const params = {
-        phone_number: "+91" + mobile,
-        type: "VERIFICATION",
+        phone_number: '+91' + mobile,
+        type: 'VERIFICATION',
         customerId: customerId,
-        mobileVerified:false,
-        hashKey:"+b1g1phabEo",
-        device_serial_num:getUniqueId()
-      }
-      axios.post(url, params, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization':  `Bearer ${tempAuthToken}`
-        } 
-      }).then(async res => {
-        if(res.data.statusCode==201){
-          // await AsyncStorage.setItem("isLoggedIn", "true");
-          navigation.navigate('Permissions',{mobile, tempAuthToken, verification_key:res.data.Details,existUser:false});
-        } else {
-          alert(res.statusText);
-        }
-        //  console.log("otp resp", res) })
-      })
+        mobileVerified: false,
+        hashKey: '+b1g1phabEo',
+        device_serial_num: getUniqueId(),
+      };
+      axios
+        .post(url, params, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tempAuthToken}`,
+          },
+        })
+        .then(async res => {
+          if (res.data.statusCode == 201) {
+            // await AsyncStorage.setItem("isLoggedIn", "true");
+            navigation.navigate('Permissions', {
+              mobile,
+              tempAuthToken,
+              verification_key: res.data.Details,
+              existUser: false,
+            });
+          } else {
+            alert(res.statusText);
+          }
+          //  console.log("otp resp", res) })
+        });
     }
-  }
+  };
 
   const getOtp = () => {
-    if (isSelected && mobile && mobile !== "" && mobile.length === 10) {
-      const url = "https://sit.l8r.in/profile-service/api/v1/phone/otp";
+    if (isSelected && mobile && mobile !== '' && mobile.length === 10) {
+      const url = 'https://sit.l8r.in/profile-service/api/v1/phone/otp';
       const params = {
-        phoneNumber: "+91" + mobile,
-        type: "VERIFICATION",
-        hashKey:"+b1g1phabEo",
-        deviceSerialNum:getUniqueId()
-      }
-      console.log("Params", params)
-      axios.post(url, params, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization':  `Bearer ${tempAuthToken}`
-        } 
-      }).then(async res => {
-        if(res.data.statusCode==200){
-          if(res.data.customerId!==null && res.data.email!==null && res.data.firstName!==null){
-            await AsyncStorage.setItem("isLoggedIn", "true");
-            navigation.navigate('Permissions',{mobile, tempAuthToken, verification_key:res.data.Details, existUser:true});
-          } else if(res.data.email!==null && res.data.firstName!==null){
-            await AsyncStorage.setItem("isLoggedIn", "true");
-            props.navigation.navigate("EmailVerification", { userData: res.data, tempAuthToken});
-          } else if(res.data.firstName!==null){
-            props.navigation.navigate('UserDetails',{email:res.data.email,userData:res.data, tempAuthToken:props.route.params.tempAuthToken});  
-          }
-          if(res.data.customerId>0){
-            await AsyncStorage.setItem("isLoggedIn", "true");
-            navigation.navigate('Permissions',{mobile, tempAuthToken, verification_key:res.data.Details, existUser:true});
-          } else {
-            navigation.navigate('Permissions',{mobile, tempAuthToken, verification_key:res.data.Details, existUser:false});
-          }
-          console.log("status", res.data)
-        } else if(res.data.statusCode==400){
-          Alert.alert(
-            "Device Not Matched",
-            res.data.Details,
-            [
+        phoneNumber: '+91' + mobile,
+        type: 'VERIFICATION',
+        hashKey: '+b1g1phabEo',
+        deviceSerialNum: getUniqueId(),
+      };
+      axios
+        .post(url, params, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tempAuthToken}`,
+          },
+        })
+        .then(async res => {
+          console.log('abjsfkba', res.data);
+          if (res.data.statusCode == 200) {
+            if (
+              (res.data.customerId === null ||
+                res.data.customerId === undefined) &&
+              (res.data.email === null || res.data.email === undefined) &&
+              (res.data.firstName === null || res.data.firstName === undefined)
+            ) {
+              // await AsyncStorage.setItem('isLoggedIn', 'true');
+              navigation.navigate('Permissions', {
+                mobile,
+                tempAuthToken,
+                verification_key: res.data.Details,
+                nextScreen: 'Otp',
+                // existUser: true,
+              });
+            } else if (res.data.email === null && res.data.firstName === null) {
+              // await AsyncStorage.setItem('isLoggedIn', 'true');
+              navigation.navigate('Permissions', {
+                userData: res.data,
+                tempAuthToken,
+                nextScreen: 'EmailVerification',
+              });
+            } else if (res.data.firstName === null) {
+              navigation.navigate('Permissions', {
+                email: res.data.email,
+                userData: res.data,
+                tempAuthToken,
+                nextScreen: 'UserDetails',
+              });
+            }
+            // if (res.data.customerId > 0) {
+            //   // await AsyncStorage.setItem('isLoggedIn', 'true');
+            //   navigation.navigate('Permissions', {
+            //     mobile,
+            //     tempAuthToken,
+            //     verification_key: res.data.Details,
+            //     existUser: true,
+            //   });
+            // }
+            else {
+              navigation.navigate('Permissions', {
+                mobile,
+                tempAuthToken,
+                verification_key: res.data.Details,
+                existUser: false,
+                nextScreen: 'Home',
+              });
+            }
+            console.log('status', res.data);
+          } else if (res.data.statusCode == 400) {
+            Alert.alert('Device Not Matched', res.data.Details, [
               {
-                text: "Cancel",
-                onPress: () => console.log("Cancel Pressed"),
-                style: "cancel"
+                text: 'Cancel',
+                onPress: () => console.log('Cancel Pressed'),
+                style: 'cancel',
               },
-              { text: "OK", onPress: () => reVerification(res.data.customerId) }
-            ]
-          );
-        } else {
-          alert(res.statusText);
-        }
-        //  console.log("otp resp", res) })
-      })
+              {text: 'OK', onPress: () => reVerification(res.data.customerId)},
+            ]);
+          } else {
+            alert(res.statusText);
+          }
+          //  console.log("otp resp", res) })
+        });
     }
-  }
-
-  
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View>
-        <TouchableOpacity style={{width:48, height:48, alignItems:"center", justifyContent:"center"}} onPress={() => navigation.navigate('Intro')}>
-          <Icon style={{ fontSize: 24 }} name="chevron-back" />
+      {/* <View>
+        <TouchableOpacity
+          style={{
+            width: 48,
+            height: 48,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          // onPress={() => navigation.navigate('Intro')}
+          // onPress={() => BackHandler.exitApp()}
+        >
+          {/* <Icon style={{fontSize: 24}} color={'#000000'} name="chevron-back" /> 
         </TouchableOpacity>
-      </View>
-      <View style={{ width: Dimensions.get('window').width*0.9,  alignSelf: "center" }}>
-        
+      </View> */}
+      <View
+        style={{
+          width: Dimensions.get('window').width - 48,
+          alignSelf: 'center',
+        }}>
         <View style={styles.login}>
-          <Text
-            style={{
-              fontSize: 28, marginTop: 30,
-              color: '#000000',
-              fontWeight: 'bold',
-            }}>
+          <Text style={[textStyles.TEXT_11, {color: colors.TEXT_COLOR_1}]}>
             Welcome.
           </Text>
-          <Text
-            style={{
-              fontSize: 16,
-              marginVertical:10,
-              color: '#000000',
-              fontWeight: 'bold',
-            }}>
+          <Text style={[textStyles.TEXT_2, {color: colors.TEXT_COLOR_1}]}>
             Enter you mobile number
           </Text>
           <View style={styles.inputContainer}>
-            <View style={{ width: "15%" , flexDirection:'column', alignItems:"center"}}>
-              <View style={{backgroundColor:"#ff7337", height:8, width:21}}/>
-              <View style={{backgroundColor:"while", height:8, width:21}}/>
-              <View style={{backgroundColor:"#18c03d", height:8, width:21}}/>
+            <View
+              style={{
+                width: '15%',
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}>
+              <View
+                style={{backgroundColor: '#ff7337', height: 8, width: 21}}
+              />
+              <View style={{backgroundColor: 'while', height: 5, width: 21}} />
+              <View
+                style={{backgroundColor: '#18c03d', height: 8, width: 21}}
+              />
             </View>
-            <Text style={{fontSize:16, color:"#000000"}}>+91</Text>
+            <Text style={{fontSize: 16, color: '#000000'}}>+91</Text>
             <TextInput
               onChangeText={value => setMobile(value)}
               value={mobile}
@@ -187,16 +238,37 @@ const LoginScreen = ({ navigation }) => {
             />
           </View>
         </View>
-        <View style={{flexDirection:"row", marginTop: 20, alignItems:"center"}}>
+        <View
+          style={{
+            flexDirection: 'row',
+            marginVertical: 16,
+            alignItems: 'center',
+          }}>
           <CheckBox
+            // style={{borderRadius: 10}}
             isChecked={isSelected}
-            onClick={()=>setIsSelected(!isSelected)}
+            onClick={() => setIsSelected(!isSelected)}
           />
-            <Text style={[styles.sign, {color:"rgba(0, 0, 0, 0.85)"}]}>By signing up, you agree to the <Text style={styles.sign}>Terms of Service and Privacy Policy</Text></Text>
+          <Text
+            style={[
+              textStyles.TEXT_7,
+              {color: colors.TEXT_COLOR_1, marginLeft: 10},
+            ]}>
+            By signing up, you agree to the{' '}
+            <Text style={[textStyles.TEXT_7, {color: colors.MAIN_THEME}]}>
+              Terms of Service and Privacy Policy
+            </Text>
+          </Text>
         </View>
         <TouchableOpacity
           disabled={!isSelected}
-          style={[styles.buttonContainer,{backgroundColor: isSelected && mobile.length===10 ? "#2c64e3" : "#D3D3D3"}]}
+          style={[
+            styles.buttonContainer,
+            {
+              backgroundColor:
+                isSelected && mobile.length === 10 ? '#2c64e3' : '#D3D3D3',
+            },
+          ]}
           onPress={getOtp}
           // onPress={() => navigation.navigate("Otp")}
         >
@@ -204,38 +276,39 @@ const LoginScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
-  )
-
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, backgroundColor: "#f3f4f5"
+    flex: 1,
+    paddingHorizontal: 24,
+    backgroundColor: '#f3f4f5',
   },
   pic: {
     justifyContent: 'center',
     alignSelf: 'center',
   },
   login: {
-
+    marginTop: 64,
   },
   inputContainer: {
-    width: Dimensions.get('window').width*0.9,
+    width: Dimensions.get('window').width - 48,
     height: 55,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 8,
-    marginTop: 40,
-    backgroundColor: "#fff"
+    marginTop: 16,
+    backgroundColor: '#fff',
   },
   inputs: {
     height: 48,
-    width: "70%",
-    fontWeight: "bold",
+    width: '70%',
+    fontWeight: 'bold',
     paddingLeft: 5,
-    alignItems: "center",
+    alignItems: 'center',
     // textAlign:"center",
-    marginLeft:30,
+    marginLeft: 30,
     fontSize: 16,
   },
   Password: {
@@ -252,34 +325,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   remembers: {
-    flexDirection: 'row'
+    flexDirection: 'row',
   },
   RememberMe: {
     height: 17,
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
-    width: 50
+    width: 50,
   },
   btnText: {
-    color: '#e3e3e3', fontWeight: "bold",
+    color: '#e3e3e3',
+    fontWeight: 'bold',
 
     fontSize: 15,
   },
   btnForgotPassword: {
     height: 20,
-
-
   },
   buttonContainer: {
     height: 55,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    width: Dimensions.get('window').width*0.9,
+    width: Dimensions.get('window').width - 48,
     borderRadius: 10,
     backgroundColor: '#2c64e3',
-    marginTop: 20,
+    // marginTop: 20,
   },
   loginButton1: {
     backgroundColor: '#49a0d7',
@@ -340,16 +412,15 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   dont: {
-    fontWeight: "bold",
+    fontWeight: 'bold',
     color: '#112d52',
     fontSize: 10,
-
   },
   sign: {
     marginLeft: 10,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     fontSize: 10,
-    color: '#2c64e3'
+    color: '#2c64e3',
   },
 });
 
