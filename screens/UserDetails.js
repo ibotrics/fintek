@@ -17,9 +17,10 @@ import SelectDropdown from 'react-native-select-dropdown';
 import SmsAndroid from 'react-native-get-sms-android';
 import {colors} from '../Styles/Colors';
 import {textStyles} from '../Styles/FontStyles';
-
+// import RNSimData from 'react-native-sim-data';
 const languages = ['English'];
 const systemVersion = DeviceInfo.getSystemVersion();
+// getBuildNumber()
 const carrier = DeviceInfo.getCarrier().then(car => {
   // "SOFTBANK"
   return car;
@@ -41,23 +42,25 @@ class UserDetailsScreen extends Component {
   }
 
   componentDidMount = async () => {
+    // console.log('sime data', RNSimData.getSimInfo());
+    // RNSimData.getSimInfo();
     // this.getSMS();
   };
 
   updateUser = () => {
     const {firstName, lastName, prefLanguage, location} = this.state;
-    const {
-      customer: {details, socialDetails},
-    } = this.props.route.params.userData;
+    // const {
+    //   customer: {details, socialDetails},
+    // } = this.props.route.params.userData;
 
     const params = {
       customerId: this.props.route.params.customerId.toString(),
       firstName: firstName,
       lastName: lastName,
       preferredLanguage: prefLanguage,
-      mobileNumber: details.mobile_number,
-      imeiNum: socialDetails.imei,
-      simSerialNumber: socialDetails.imei,
+      mobileNumber: this.props.route.params.mobile,
+      imeiNum: DeviceInfo.getBuildNumber(),
+      simSerialNumber: DeviceInfo.getBuildNumber(),
     };
 
     if ((firstName !== '' || lastName !== '') && prefLanguage) {
@@ -75,7 +78,9 @@ class UserDetailsScreen extends Component {
           if (res.data.statusCode == '201') {
             // this.setState({customerId:res.data.customer.details.customer_id})
             await AsyncStorage.setItem('isLoggedIn', 'true');
-            // this.getSMS();
+            await AsyncStorage.setItem('screenStatus', 'Home');
+            this.getSMS();
+
             this.props.navigation.navigate('Home');
             //   refRBSheet.current.open();
           } else {
@@ -113,8 +118,8 @@ class UserDetailsScreen extends Component {
         var arr = JSON.parse(smsList);
         const url = 'https://sit.l8r.in/fileupload-service/api/v1/upload';
         const params = {
-          mobileNumber: details.mobile_number,
-          customerId: details.customer_id.toString(),
+          mobileNumber: this.props.route.params.mobile,
+          customerId: this.props.route.params.customerId.toString(),
           messagesData: arr === [] ? [{}] : arr,
         };
         axios
@@ -127,6 +132,7 @@ class UserDetailsScreen extends Component {
           .then(res => {
             console.log('sms data', res);
             alert(res.data.statusCode);
+            return true;
             // if(res.status===200){
             //     this.getSMS();
             //     navigation.navigate('Home');

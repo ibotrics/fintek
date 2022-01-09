@@ -36,7 +36,6 @@ const MyStack = () => {
     <SafeAreaProvider>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{headerShown: false}}>
-          <Stack.Screen name="UserDetails" component={UserDetailsScreen} />
           <Stack.Screen name="Intro" component={IntroScreen} />
           <Stack.Screen
             name="Login"
@@ -48,6 +47,7 @@ const MyStack = () => {
             name="EmailVerification"
             component={EmailVerificationScreen}
           />
+          <Stack.Screen name="UserDetails" component={UserDetailsScreen} />
           <Stack.Screen name="Otp" component={OtpScreen} />
           <Stack.Screen name="Permissions" component={PermissionsScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />

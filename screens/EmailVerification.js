@@ -15,7 +15,7 @@ import axios from 'axios';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import {colors} from '../Styles/Colors';
 import {textStyles} from '../Styles/FontStyles';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const v1 =
   'Please click the link sent to your email to complete the verification';
 const v2 =
@@ -29,6 +29,7 @@ const EmailVerificationScreen = props => {
   const [data, setData] = useState(null);
 
   const [userData, setUserData] = useState(null);
+
   const validateEmail = val => {
     setEmail(val);
     return String(val)
@@ -38,13 +39,16 @@ const EmailVerificationScreen = props => {
       );
   };
 
-  const gotoUserDetails = () => {
+  const gotoUserDetails = async () => {
     refRBSheet.current.close();
     if (verification) {
+      await AsyncStorage.setItem('screenStatus', 'UserDetails');
       props.navigation.navigate('UserDetails', {
+        mobile: props.route.params.mobile,
         email,
         userData: props.route.params.userData,
         tempAuthToken: props.route.params.tempAuthToken,
+        customerId: props.route.params.customerId,
       });
     }
   };
@@ -53,14 +57,11 @@ const EmailVerificationScreen = props => {
   // }
 
   const sendVerifyLink = () => {
-    const {
-      customer: {details, socialDetails},
-    } = props.route.params.userData;
     if (validateEmail(email)) {
       const url = 'https://sit.l8r.in/profile-service/api/v1/send/verifylink';
       const params = {
-        customerId: details.customer_id.toString(),
-        phoneNumber: details.mobile_number,
+        customerId: props.route.params.customerId.toString(),
+        phoneNumber: '+91' + props.route.params.mobile,
         email: email,
         type: 'VERIFICATION',
       };

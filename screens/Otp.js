@@ -17,13 +17,14 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import axios from 'axios';
 import RNOtpVerify from 'react-native-otp-verify';
 import {getUniqueId, getManufacturer} from 'react-native-device-info';
-import OTPInputView from '@twotalltotems/react-native-otp-input';
-// import OTPInputView from './components/react-native-otp-input';
+// import OTPInputView from '@twotalltotems/react-native-otp-input';
+import OTPInputView from './components/react-native-otp-input';
 import DeviceInfo from 'react-native-device-info';
 import GetLocation from 'react-native-get-location';
 // import {Shadow} from 'react-native-neomorph-shadows';
 import {colors} from '../Styles/Colors';
 import {textStyles} from '../Styles/FontStyles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const systemVersion = DeviceInfo.getSystemVersion();
 const carrier = DeviceInfo.getCarrier().then(carrier => {
@@ -46,6 +47,7 @@ const OtpScreen = props => {
   };
 
   useEffect(() => {
+    console.log('params', props.route.params);
     setMobile(props.route.params.mobile);
     setVerificationKey(props.route.params.verification_key);
     myTimeout();
@@ -169,18 +171,19 @@ const OtpScreen = props => {
           if (res.data.statusCode == 200) {
             // EmailVerification
             await createCustomer();
-            props.navigation.navigate('EmailVerification', {
-              userData: res.data,
-              tempAuthToken: props.route.params.tempAuthToken,
-            });
+            // props.navigation.navigate('EmailVerification', {
+            //   userData: res.data,
+            //   tempAuthToken: props.route.params.tempAuthToken,
+            // });
             // createCustomerSocial();
           } else {
+            setWrongOtp(false);
             alert('failed to login');
             console.log(res.data);
           }
         })
         .catch(err => {
-          alert(err);
+          alert('error in otp validation', err);
         });
     }
   };
@@ -217,10 +220,17 @@ const OtpScreen = props => {
           Authorization: `Bearer ${props.route.params.tempAuthToken}`,
         },
       })
-      .then(res => {
+      .then(async res => {
         console.log('otp resp', res.data);
         if (res.data.statusCode == 201) {
-          alert('success to crete customer');
+          await AsyncStorage.setItem('screenStatus', 'EmailVerification');
+          props.navigation.navigate('EmailVerification', {
+            mobile: props.route.params.mobile,
+            userData: res.data,
+            customerId: res.data.customer.details.customer_id,
+            tempAuthToken: props.route.params.tempAuthToken,
+          });
+          // alert('success to crete customer');
 
           // props.navigation.navigate("EmailVerification", { userData: res.data, tempAuthToken: props.route.params.tempAuthToken });
         } else {
@@ -252,8 +262,8 @@ const OtpScreen = props => {
             textStyles.TEXT_1,
             {color: colors.MAIN_THEME, marginVertical: 12, fontWeight: 'bold'},
           ]}>
-          <Text>8888888888 </Text>
-          {/* {props.route.params.mobile} */}
+          {/* <Text>8888888888 </Text> */}
+          {props.route.params.mobile}
         </Text>
       </View>
 

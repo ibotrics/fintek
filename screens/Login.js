@@ -21,15 +21,128 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getUniqueId, getManufacturer} from 'react-native-device-info';
 import {colors} from '../Styles/Colors';
 import {textStyles} from '../Styles/FontStyles';
+import {check, requestMultiple, PERMISSIONS} from 'react-native-permissions';
+
 const LoginScreen = ({navigation}) => {
   const [mobile, setMobile] = useState('');
   const [tempAuthToken, setTempAuthToken] = useState(null);
   const [isSelected, setIsSelected] = useState(true);
+  const [isAllPermissionsGranted, setIsAllPermissionsGranted] = useState(null);
 
   useEffect(() => {
     getAuthToken();
     getPhone();
+    checkPermissions();
   }, []);
+
+  const checkPermissions = async () => {
+    var allPermissions = true;
+    await check(PERMISSIONS.ANDROID.READ_SMS)
+      .then(result => {
+        switch (result) {
+          case RESULTS.UNAVAILABLE:
+            allPermissions = false;
+            console.log(
+              'This feature is not available (on this device / in this context)',
+            );
+            break;
+          case RESULTS.DENIED:
+            allPermissions = false;
+            console.log(
+              'The permission has not been requested / is denied but requestable',
+            );
+            break;
+          case RESULTS.LIMITED:
+            allPermissions = false;
+            console.log('The permission is limited: some actions are possible');
+            break;
+          case RESULTS.GRANTED:
+            allPermissions = true;
+            console.log('The permission is granted');
+            break;
+          case RESULTS.BLOCKED:
+            allPermissions = false;
+            console.log('The permission is denied and not requestable anymore');
+            break;
+        }
+      })
+      .catch(error => {
+        console.log('error', error);
+        allPermissions = false;
+        return;
+      });
+    await check(PERMISSIONS.ANDROID.READ_PHONE_STATE)
+      .then(result => {
+        switch (result) {
+          case RESULTS.UNAVAILABLE:
+            allPermissions = false;
+            console.log(
+              'This feature is not available (on this device / in this context)',
+            );
+            break;
+          case RESULTS.DENIED:
+            allPermissions = false;
+            console.log(
+              'The permission has not been requested / is denied but requestable',
+            );
+            break;
+          case RESULTS.LIMITED:
+            allPermissions = false;
+            console.log('The permission is limited: some actions are possible');
+            break;
+          case RESULTS.GRANTED:
+            allPermissions = allPermissions && true;
+            console.log('The permission is granted');
+            break;
+          case RESULTS.BLOCKED:
+            allPermissions = false;
+            console.log('The permission is denied and not requestable anymore');
+            break;
+        }
+      })
+      .catch(error => {
+        console.log('error', error);
+        allPermissions = false;
+        return;
+      });
+    await check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION)
+      .then(result => {
+        switch (result) {
+          case RESULTS.UNAVAILABLE:
+            allPermissions = false;
+            console.log(
+              'This feature is not available (on this device / in this context)',
+            );
+            break;
+          case RESULTS.DENIED:
+            allPermissions = false;
+            console.log(
+              'The permission has not been requested / is denied but requestable',
+            );
+            break;
+          case RESULTS.LIMITED:
+            allPermissions = false;
+            console.log('The permission is limited: some actions are possible');
+            break;
+          case RESULTS.GRANTED:
+            allPermissions = allPermissions && true;
+            console.log('The permission is granted');
+            break;
+          case RESULTS.BLOCKED:
+            allPermissions = false;
+            console.log('The permission is denied and not requestable anymore');
+            break;
+        }
+      })
+      .catch(error => {
+        console.log('error', error);
+        allPermissions = false;
+        return;
+      });
+    await AsyncStorage.setItem('screenStatus', 'Login');
+    await setIsAllPermissionsGranted(allPermissions);
+    console.log('allPermissions', allPermissions, isAllPermissionsGranted);
+  };
 
   const getPhone = () => {
     if (Platform.OS === 'android') {
@@ -39,7 +152,7 @@ const LoginScreen = ({navigation}) => {
     }
   };
 
-  const getAuthToken = () => {
+  const getAuthToken = async () => {
     const url =
       'https://dev.l8r.in/auth/realms/respo-api-realm-local/protocol/openid-connect/token';
     const data = {
@@ -53,7 +166,6 @@ const LoginScreen = ({navigation}) => {
     axios
       .post(url, querystring.stringify(data))
       .then(async response => {
-        // console.log('userresponse ' + response.data.access_token);
         setTempAuthToken(response.data.access_token);
         await AsyncStorage.setItem('tempAuthToken', response.data.access_token);
       })
@@ -83,7 +195,6 @@ const LoginScreen = ({navigation}) => {
         })
         .then(async res => {
           if (res.data.statusCode == 201) {
-            // await AsyncStorage.setItem("isLoggedIn", "true");
             navigation.navigate('Permissions', {
               mobile,
               tempAuthToken,
@@ -115,7 +226,7 @@ const LoginScreen = ({navigation}) => {
           },
         })
         .then(async res => {
-          console.log('abjsfkba', res.data);
+          console.log('abjsfkba', res.data, isAllPermissionsGranted);
           if (res.data.statusCode == 200) {
             if (
               (res.data.customerId === null ||
@@ -124,45 +235,49 @@ const LoginScreen = ({navigation}) => {
               (res.data.firstName === null || res.data.firstName === undefined)
             ) {
               // await AsyncStorage.setItem('isLoggedIn', 'true');
-              navigation.navigate('Permissions', {
-                mobile,
-                tempAuthToken,
-                verification_key: res.data.Details,
-                nextScreen: 'Otp',
-                // existUser: true,
-              });
+              navigation.navigate(
+                !isAllPermissionsGranted ? 'Permissions' : 'Otp',
+                {
+                  mobile,
+                  tempAuthToken,
+                  verification_key: res.data.Details,
+                  nextScreen: 'Otp',
+                  // existUser: true,
+                },
+              );
             } else if (res.data.email === null && res.data.firstName === null) {
               // await AsyncStorage.setItem('isLoggedIn', 'true');
-              navigation.navigate('Permissions', {
-                userData: res.data,
-                tempAuthToken,
-                nextScreen: 'EmailVerification',
-              });
+              navigation.navigate(
+                !isAllPermissionsGranted ? 'Permissions' : 'EmailVerification',
+                {
+                  mobile,
+                  userData: res.data,
+                  tempAuthToken,
+                  nextScreen: 'EmailVerification',
+                },
+              );
             } else if (res.data.firstName === null) {
-              navigation.navigate('Permissions', {
-                email: res.data.email,
-                userData: res.data,
-                tempAuthToken,
-                nextScreen: 'UserDetails',
-              });
-            }
-            // if (res.data.customerId > 0) {
-            //   // await AsyncStorage.setItem('isLoggedIn', 'true');
-            //   navigation.navigate('Permissions', {
-            //     mobile,
-            //     tempAuthToken,
-            //     verification_key: res.data.Details,
-            //     existUser: true,
-            //   });
-            // }
-            else {
-              navigation.navigate('Permissions', {
-                mobile,
-                tempAuthToken,
-                verification_key: res.data.Details,
-                existUser: false,
-                nextScreen: 'Home',
-              });
+              navigation.navigate(
+                !isAllPermissionsGranted ? 'Permissions' : 'UserDetails',
+                {
+                  mobile,
+                  email: res.data.email,
+                  userData: res.data,
+                  tempAuthToken,
+                  nextScreen: 'UserDetails',
+                },
+              );
+            } else {
+              navigation.navigate(
+                !isAllPermissionsGranted ? 'Permissions' : 'Home',
+                {
+                  mobile,
+                  tempAuthToken,
+                  verification_key: res.data.Details,
+                  existUser: false,
+                  nextScreen: 'Home',
+                },
+              );
             }
             console.log('status', res.data);
           } else if (res.data.statusCode == 400) {

@@ -15,6 +15,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RFPercentage, RFValue} from 'react-native-responsive-fontsize';
 import {colors} from '../Styles/Colors';
 import {textStyles} from '../Styles/FontStyles';
+import RNSimData from 'react-native-sim-data';
+
 const slides = [
   {
     id: 1,
@@ -126,10 +128,23 @@ export default class IntroScreen extends React.Component {
   // }
 
   componentDidMount = async () => {
-    let isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
-    if (isLoggedIn) {
-      this.props.navigation.navigate('Home');
+    // console.log('sime data', RNSimData.getSimInfo());
+    // RNSimData.getSimInfo();
+    try {
+      let screenStatus = await AsyncStorage.getItem('screenStatus');
+      this.props.navigation.navigate(screenStatus);
+    } catch {
+      return null;
     }
+    // if (screenStatus == 1) {
+    //   this.props.navigation.navigate('Login');
+    // } else if (screenStatus == 2) {
+    //   this.props.navigation.navigate('EmailVerification');
+    // } else if (screenStatus == 3) {
+    //   this.props.navigation.navigate('UserDetails');
+    // } else if (screenStatus == 4) {
+    //   this.props.navigation.navigate('Home');
+    // }
   };
 
   isEnable = async () => {
