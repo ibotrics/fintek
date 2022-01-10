@@ -8,6 +8,7 @@ import {
   useColorScheme,
   View,
   Button,
+  LogBox,
 } from 'react-native';
 import DeviceNumber from 'react-native-device-number';
 import {NavigationContainer} from '@react-navigation/native';
@@ -20,6 +21,7 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+
 import LoginScreen from './screens/Login';
 import OtpScreen from './screens/Otp';
 import IntroScreen from './screens/Intro';
@@ -28,7 +30,7 @@ import PermissionsScreen from './screens/Permissions';
 import UserDetailsScreen from './screens/UserDetails';
 import EmailVerificationScreen from './screens/EmailVerification';
 import GlobalFont from 'react-native-global-font';
-
+LogBox.ignoreAllLogs();
 const Stack = createNativeStackNavigator();
 
 const MyStack = () => {

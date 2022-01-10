@@ -15,7 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RFPercentage, RFValue} from 'react-native-responsive-fontsize';
 import {colors} from '../Styles/Colors';
 import {textStyles} from '../Styles/FontStyles';
-import RNSimData from 'react-native-sim-data';
+// import RNSimData from 'react-native-sim-data';
 
 const slides = [
   {

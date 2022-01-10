@@ -36,14 +36,13 @@ const OtpScreen = props => {
   const refRBSheet = useRef();
   const [mobile, setMobile] = useState('');
   const [value, setValue] = useState('');
-  const [authentication, setAuthentication] = useState(false);
+  const [authentication, setAuthentication] = useState(true);
   const [verificationKey, setVerificationKey] = useState('');
   const [location, setLocation] = useState({});
-  const [wrongOtp, setWrongOtp] = useState({});
+  const [wrongOtp, setWrongOtp] = useState(false);
 
-  wrongOtp;
   const myTimeout = () => {
-    setTimeout(() => setAuthentication(true), 3000);
+    setTimeout(() => setAuthentication(false), 3000);
   };
 
   useEffect(() => {
@@ -54,11 +53,18 @@ const OtpScreen = props => {
   }, []);
 
   const otpHandler = (message: String) => {
-    console.log('message', message);
-    const otp = /(\d{4})/g.exec(message)[1];
-    console.log('otp', otp);
-    setValue(otp ? otp : '');
-    RNOtpVerify.removeListener();
+    try {
+      console.log('message', message);
+      const otp = /(\d{4})/g.exec(message)[1];
+      console.log('otp', otp);
+      setValue(otp ? otp : '');
+      if (otp.length === 4) {
+        validateOtp();
+      }
+      RNOtpVerify.removeListener();
+    } catch {
+      console.log('errrrrr');
+    }
   };
 
   useEffect(() => {
@@ -118,7 +124,7 @@ const OtpScreen = props => {
     if (mobile && mobile !== '' && mobile.length === 10) {
       const url = 'https://sit.l8r.in/profile-service/api/v1/phone/otp';
       const params = {
-        // phoneNumber: '+91' + props.route.params.mobile,
+        phoneNumber: '+91' + props.route.params.mobile,
         type: 'VERIFICATION',
         hashKey: '+b1g1phabEo',
         deviceSerialNum: getUniqueId(),
@@ -151,11 +157,12 @@ const OtpScreen = props => {
   //   }
   // }
   const validateOtp = () => {
+    console.log('validating otp', props.route.params);
     if (value && value !== '' && value.length === 4) {
       const url = 'https://sit.l8r.in/profile-service/api/v1/verify/otp';
       const params = {
         otp: value,
-        verification_key: verificationKey,
+        verification_key: props.route.params.verification_key,
         check: '+91' + mobile,
       };
 
@@ -177,13 +184,13 @@ const OtpScreen = props => {
             // });
             // createCustomerSocial();
           } else {
-            setWrongOtp(false);
+            setWrongOtp(true);
             alert('failed to login');
             console.log(res.data);
           }
         })
         .catch(err => {
-          alert('error in otp validation', err);
+          alert('error in otp validation', value);
         });
     }
   };
@@ -231,7 +238,6 @@ const OtpScreen = props => {
             tempAuthToken: props.route.params.tempAuthToken,
           });
           // alert('success to crete customer');
-
           // props.navigation.navigate("EmailVerification", { userData: res.data, tempAuthToken: props.route.params.tempAuthToken });
         } else {
           alert('failed to crete customer');
@@ -308,7 +314,7 @@ const OtpScreen = props => {
       {!authentication ? (
         <View>
           <Text style={[textStyles.TEXT_5, {color: colors.RED, marginTop: 16}]}>
-            {!wrongOtp ? 'Wrong Otp' : 'Didn’t receive OTP?'}
+            {wrongOtp ? 'Wrong Otp' : 'Didn’t receive OTP?'}
           </Text>
           <TouchableOpacity
             style={{

@@ -14,7 +14,7 @@ import axios from 'axios';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SelectDropdown from 'react-native-select-dropdown';
-import SmsAndroid from 'react-native-get-sms-android';
+import SmsAndroid from 'react-native-get-sms-android-v2';
 import {colors} from '../Styles/Colors';
 import {textStyles} from '../Styles/FontStyles';
 // import RNSimData from 'react-native-sim-data';
@@ -58,7 +58,7 @@ class UserDetailsScreen extends Component {
       firstName: firstName,
       lastName: lastName,
       preferredLanguage: prefLanguage,
-      mobileNumber: this.props.route.params.mobile,
+      mobileNumber: '91' + this.props.route.params.mobile,
       imeiNum: DeviceInfo.getBuildNumber(),
       simSerialNumber: DeviceInfo.getBuildNumber(),
     };
@@ -74,14 +74,13 @@ class UserDetailsScreen extends Component {
           },
         })
         .then(async res => {
-          console.log('otp resp', res);
+          console.log('update user ', res);
           if (res.data.statusCode == '201') {
             // this.setState({customerId:res.data.customer.details.customer_id})
             await AsyncStorage.setItem('isLoggedIn', 'true');
             await AsyncStorage.setItem('screenStatus', 'Home');
             this.getSMS();
-
-            this.props.navigation.navigate('Home');
+            // this.props.navigation.navigate('Home');
             //   refRBSheet.current.open();
           } else {
             alert(res.statusText);
@@ -103,6 +102,7 @@ class UserDetailsScreen extends Component {
       // body: 'How are you shadman', // content to match
       // the next 2 filters can be used for pagination
       indexFrom: 0, // start from index 0
+      // date_sent:'6623273'
       // maxCount: 10, // count of SMS to return each time
     };
     SmsAndroid.list(
@@ -112,27 +112,57 @@ class UserDetailsScreen extends Component {
         console.log('Failed with this error: ' + fail);
       },
       (count, smsList) => {
-        alert(count);
         // console.log('Count: ', count);
-        console.log('List: ', smsList);
-        var arr = JSON.parse(smsList);
+        console.log('List: ', smsList[0]);
+        var resArr = JSON.parse(smsList);
+        var arr = [];
+        resArr.map(item => {
+          if (item.address.length <= 9) {
+            arr.push({
+              address: item.address,
+              date: item.date,
+              date_sent: item.date_sent,
+              body: item.body,
+              sim_imsi: item.sim_imsi,
+            });
+          }
+        });
+        alert(arr[0], arr.length);
         const url = 'https://sit.l8r.in/fileupload-service/api/v1/upload';
+        // if (smsList.length() > 0) {
+        //   smsList.map(item => {
+        //     // address
+        //     if (item.address.indexOf('+91') > -1) {
+        //       console.log('hello found inside mobile number');
+        //     } else {
+        //       arr.push(item);
+        //     }
+        //   });
+        //   //   alert(arr.length());
+        // } else {
+        //   arr = [{}];
+        // }
+
         const params = {
           mobileNumber: this.props.route.params.mobile,
           customerId: this.props.route.params.customerId.toString(),
           messagesData: arr === [] ? [{}] : arr,
         };
+        console.log('mobile resp', params);
         axios
           .post(url, params, {
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${this.props.route.params.tempAuthToken}`,
             },
+            // maxContentLength: 100000000,
+            // maxBodyLength: 1000000000,
           })
           .then(res => {
             console.log('sms data', res);
-            alert(res.data.statusCode);
-            return true;
+            // alert('sms Data has been uploaded', arr.length());
+            this.props.navigation.navigate('Home');
+            // return true;
             // if(res.status===200){
             //     this.getSMS();
             //     navigation.navigate('Home');
@@ -173,7 +203,7 @@ class UserDetailsScreen extends Component {
               textStyles.TEXT_1,
               {color: colors.TEXT_COLOR_1, marginBottom: 16},
             ]}>
-            Enter your email
+            Enter Your Details
           </Text>
           <View style={styles.inputContainer}>
             <TextInput

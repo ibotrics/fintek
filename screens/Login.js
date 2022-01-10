@@ -235,6 +235,13 @@ const LoginScreen = ({navigation}) => {
               (res.data.firstName === null || res.data.firstName === undefined)
             ) {
               // await AsyncStorage.setItem('isLoggedIn', 'true');
+              console.log('sending  params from login', {
+                mobile,
+                tempAuthToken,
+                verification_key: res.data.Details,
+                nextScreen: 'Otp',
+                // existUser: true,
+              });
               navigation.navigate(
                 !isAllPermissionsGranted ? 'Permissions' : 'Otp',
                 {

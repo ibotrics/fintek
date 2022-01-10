@@ -10,7 +10,6 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import SmsAndroid from 'react-native-get-sms-android';
 import RNAndroidLocationEnabler from 'react-native-android-location-enabler';
 
 import {check, requestMultiple, PERMISSIONS} from 'react-native-permissions';
